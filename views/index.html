@@ -1,0 +1,156 @@
+
+<html lang="es" >
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  <!-- Angular Material requires Angular.js Libraries -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-resource.min.js"></script>
+  <!-- Angular Material Library -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.js"></script>
+  	
+  <style>
+  	.page-header {
+  		border-bottom: 1px solid #E6E6E6
+  	}
+  </style>
+</head>
+<body ng-app="myApp" ng-cloak>
+  <div class="container">
+  	<div class="row">
+  		<div class="col-md-12 col-xs-12" ng-controller="LedCtrl">
+  			<h2 class="page-header"><i class="fa fa-bolt"></i> Led</h2>
+
+  			<div class="row">
+  				<div class="col-md-6 col-xs-12">
+  					<h3 class="page-header"><i class="fa fa-power-off"></i> Switch</h3>
+					  <md-switch ng-model="status" ng-change="onOff()">
+							{{ status ? 'On' : 'Off' }}
+					  </md-switch>
+					</div>
+
+					<div class="col-md-6 col-xs-12">
+						<h3 class="page-header"><i class="fa fa-sun-o"></i> Intensidad</h3>
+						<div class="row">
+							<div class="col-md-10 col-xs-10">
+					      <md-slider flex="90" min="0" max="10000" ng-model="value" aria-label="red" step="1" ng-change="intensity()">
+					      </md-slider>
+				      </div>
+				      <div class="col-md-2 col-xs-2">
+				      	{{value / 100}} %
+			      	</div>
+			      </div>	
+					</div>
+
+					<div class="col-md-6 col-xs-12">
+  					<h3 class="page-header"><i class="fa fa-hand-o-down"></i> No-toggle</h3>
+					  <div class="text-center">
+						  <md-button class="md-fab md-primary" ng-mousedown='holding()' ng-mouseup="released()">
+			          <i class="fa fa-lightbulb-o fa-2x"></i>
+			        </md-button>
+		        </div>
+					</div>
+
+					<div class="col-md-6 col-xs-12">
+  					<h3 class="page-header"><i class="fa fa-code"></i> Morse</h3>
+  					<form class="form">
+	  					<div class="form-group">
+				        <input class="form-control" placeholder="Texto" ng-model="text">				        
+			        </div>
+			        <button class="btn btn-danger btn-block" ng-click="morse()" ng-show="!emitting">
+			        	Enviar
+			        </button>
+			      </form>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+  
+  <!-- Your application bootstrap  -->
+  <script type="text/javascript">    
+
+    var myApp = angular.module('myApp', ['ngResource', 'ngMaterial']);
+    
+    myApp.controller('LedCtrl', function($scope, Led) {
+		  $scope.status = false;
+		  $scope.value = 0;
+		  $scope.text = '';
+		  $scope.emitting = false;
+
+		  $scope.holding = function() {
+		  	if($scope.status) return false;
+
+		  	$scope.status = true;
+		  	$scope.onOff();
+		  };
+
+		  $scope.released = function() {
+		  	$scope.status = false;
+		  	$scope.onOff();
+		  }
+
+    	$scope.intensity = function() {
+    		Led.pwm({value: $scope.value / 10000}).$promise.then(function(res) {
+    			$scope.status = false;
+    		});
+    	};
+		  
+		  Led.status().$promise.then(function(res) {
+		  	$scope.status = res.status;
+		  });
+
+		  $scope.onOff = function() {
+		  	$scope.value = 0;
+				Led.switch({status: $scope.status}).$promise.then(function(res){
+				  if(res.status != $scope.status)
+				    $scope.status = res.status;
+				});	
+		  };
+
+		  $scope.morse = function() {
+		  	if($scope.text == '') return false;
+		  	$scope.emitting = true;
+		  	Led.morse({text: $scope.text}).$promise.then(function(res) {
+		  		$scope.emitting = false;
+		  	});
+		  };
+		});
+
+		myApp.factory('Led', function($resource) {
+		  return $resource('/api/led', {
+			  }, {
+				switch: {
+				  method: 'POST',
+				  url: '/api/led/switch',
+				  isArray: false
+				},
+				status: {
+					method: 'GET',
+					url: '/api/led/status',
+					isArray: false
+				},
+				pwm: {
+					method: 'POST',
+					url: '/api/led/pwm',
+					isArray: false
+				},
+				morse: {
+					method: 'POST',
+					url: '/api/led/morse',
+					isArray: false
+				}
+		  });
+		});
+	
+  </script>
+  
+</body>
+</html>
