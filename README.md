@@ -20,5 +20,6 @@ Led On / Off example for the Raspberry PI 2, using ExpressJS, [Fivdi's  On/Off ]
 3. On / off control via "press and hold" like input
 4. Text to morse code
 
-If you have no idea how to set up the led with your raspberry here's some usefull link: 
+If you have no idea how to set up the led with your raspberry here's some usefull link, credits to [@arvindr21] (https://github.com/arvindr21): 
+
 [Raspberry Pi, Node.js and a LED – Emit Morse Code] (http://thejackalofjavascript.com/raspberry-pi-node-js-led-emit-morse-code/)
